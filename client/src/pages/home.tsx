@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/product-card';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiClient } from '@/lib/api';
 import type { Product, Category } from '@shared/schema';
 import { useState } from 'react';
 
@@ -15,11 +15,13 @@ export default function Home() {
   const { toast } = useToast();
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products'],
+    queryKey: ['products'],
+    queryFn: () => apiClient.getProducts(),
   });
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
+    queryKey: ['categories'],
+    queryFn: () => apiClient.getCategories(),
   });
 
   const featuredProducts = products.slice(0, 6);
@@ -29,7 +31,18 @@ export default function Home() {
     if (!email) return;
 
     try {
-      await apiRequest('POST', '/api/newsletter', { email });
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to subscribe');
+      }
+
       toast({
         title: "Success!",
         description: "You've been subscribed to our newsletter.",

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api';
 import type { Product } from '@shared/schema';
 import { useState } from 'react';
 
@@ -17,7 +18,8 @@ export default function ProductDetail() {
   const { toast } = useToast();
 
   const { data: product, isLoading, error } = useQuery<Product>({
-    queryKey: ['/api/products', id],
+    queryKey: ['product', id],
+    queryFn: () => apiClient.getProduct(id!),
     enabled: !!id,
   });
 
