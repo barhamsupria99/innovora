@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product-card';
+import { apiClient } from '@/lib/api';
 import type { Product, Category } from '@shared/schema';
 
 export default function Products() {
@@ -22,11 +23,16 @@ export default function Products() {
   const searchParam = params.get('search');
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products', categoryFilter || ''],
+    queryKey: ['products', categoryFilter || '', searchParam || ''],
+    queryFn: () => apiClient.getProducts({
+      category: categoryFilter || undefined,
+      search: searchParam || undefined
+    }),
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
+    queryKey: ['categories'],
+    queryFn: () => apiClient.getCategories(),
   });
 
   // Filter and search products

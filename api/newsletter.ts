@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { z } from 'zod';
+import { dbStorage } from './db-storage';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -14,20 +14,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'POST') {
     try {
-      const emailSchema = z.object({
-        email: z.string().email("Invalid email address")
-      });
+      const { email } = req.body;
       
-      const { email } = emailSchema.parse(req.body);
-      
-      // In a real app, this would save to database and send to email service
-      console.log(`Newsletter subscription: ${email}`);
-      
-      res.status(200).json({ message: "Successfully subscribed to newsletter" });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors[0].message });
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ message: 'Email is required' });
       }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Invalid email format' });
+      }
+
+      // Subscribe to newsletter using database storage
+      const result = await dbStorage.subscribeToNewsletter(email);
+      
+      res.status(200).json({ 
+        message: 'Successfully subscribed to newsletter',
+        email: result.email 
+      });
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error);
       res.status(500).json({ message: "Failed to subscribe to newsletter" });
     }
   } else {

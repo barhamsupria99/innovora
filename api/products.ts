@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { storage } from './storage';
+import { dbStorage } from './db-storage';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -17,16 +17,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { category, search } = req.query;
       
       let products;
-      if (search) {
-        products = await storage.searchProducts(search as string);
-      } else if (category) {
-        products = await storage.getProductsByCategory(category as string);
+      if (search && typeof search === 'string') {
+        products = await dbStorage.searchProducts(search);
+      } else if (category && typeof category === 'string') {
+        products = await dbStorage.getProductsByCategory(category);
       } else {
-        products = await storage.getProducts();
+        products = await dbStorage.getProducts();
       }
       
       res.status(200).json(products);
     } catch (error) {
+      console.error('Error fetching products:', error);
       res.status(500).json({ message: "Failed to fetch products" });
     }
   } else {

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { storage } from '../storage';
+import { dbStorage } from '../db-storage';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -15,14 +15,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
       const { slug } = req.query;
-      const category = await storage.getCategory(slug as string);
+      
+      if (!slug || typeof slug !== 'string') {
+        return res.status(400).json({ message: 'Category slug is required' });
+      }
+
+      const category = await dbStorage.getCategory(slug);
       
       if (!category) {
-        return res.status(404).json({ message: "Category not found" });
+        return res.status(404).json({ message: 'Category not found' });
       }
-      
+
       res.status(200).json(category);
     } catch (error) {
+      console.error('Error fetching category:', error);
       res.status(500).json({ message: "Failed to fetch category" });
     }
   } else {
